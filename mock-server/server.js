@@ -1,9 +1,13 @@
 const express = require("express");
+const fs = require("fs");
+const path = require("path");
 
 const app = express();
 app.use(express.json({ limit: "1mb" }));
 
 const PORT = process.env.PORT || 3000;
+const dashboardBuildPath = path.join(__dirname, "..", "dashboard", "dist");
+const hasDashboardBuild = fs.existsSync(path.join(dashboardBuildPath, "index.html"));
 
 const mockAccounts = {
   "ACC-88392": {
@@ -202,7 +206,9 @@ app.get("/health", (_req, res) => {
   res.json({ status: "ok", service: "kapture-collections-mock-server", timestamp: nowIso() });
 });
 
-app.get("/", (_req, res) => {
+app.get("/", (_req, res, next) => {
+  if (hasDashboardBuild) return next();
+
   res.type("html").send(`<!doctype html>
 <html lang="en">
 <head>
@@ -462,6 +468,13 @@ app.post("/webhook", (req, res) => {
     return res.status(500).json(fail("Internal server error", "INTERNAL_ERROR"));
   }
 });
+
+if (hasDashboardBuild) {
+  app.use(express.static(dashboardBuildPath));
+  app.get("*", (_req, res) => {
+    res.sendFile(path.join(dashboardBuildPath, "index.html"));
+  });
+}
 
 app.use((err, _req, res, _next) => {
   if (err instanceof SyntaxError && "body" in err) {

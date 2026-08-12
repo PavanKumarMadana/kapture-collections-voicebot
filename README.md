@@ -294,9 +294,9 @@ Security scenario:
 
 If live Vapi events are needed later, the dashboard can be connected through SSE, WebSocket, or polling from the mock server. In this submission, Demo Mode is local and clearly labeled as simulated.
 
-## Production Deployment
+## Render Deployment
 
-This repository is prepared for GitHub and Vercel deployment at:
+This repository is prepared for GitHub and Render deployment at:
 
 ```text
 https://github.com/PavanKumarMadana/kapture-collections-voicebot.git
@@ -308,7 +308,19 @@ Frontend entry point:
 dashboard/src/main.jsx
 ```
 
-Vercel deploys the Vite React dashboard as a static frontend from `dashboard/dist`. The Express mock server is a local/mock backend for assignment testing and Vapi webhook simulation. For a deployed dashboard to execute tools against a backend, set `VITE_API_BASE_URL` to a deployed mock-server URL. If unset, the dashboard uses same-origin paths such as `/webhook` and `/health`.
+The project is a frontend + backend application:
+
+- Vite React dashboard in `dashboard/`.
+- Node.js/Express mock backend in `mock-server/`.
+- Production build output in `dashboard/dist`.
+- Express serves the built dashboard and the API from the same Render Web Service.
+
+In production on Render, the dashboard can call same-origin endpoints:
+
+- `GET /health`
+- `POST /webhook`
+
+`VITE_API_BASE_URL` is optional. Leave it empty for the recommended single Render Web Service setup. Set it only if the backend is deployed on a separate origin.
 
 Root commands:
 
@@ -320,15 +332,17 @@ npm run preview
 npm test
 ```
 
-Vercel settings:
+Render Web Service settings:
 
 ```text
-Framework Preset: Vite
-Install Command: npm install
-Build Command: npm run build
-Output Directory: dashboard/dist
-Node.js Version: 18.x or newer
+Service Type: Web Service
+Runtime: Node
+Build Command: npm install && npm run build
+Start Command: npm start
+Node Version: 20 or newer
 ```
+
+The same settings are captured in `render.yaml`.
 
 Environment variables:
 
@@ -337,7 +351,7 @@ VITE_API_BASE_URL=
 PORT=3000
 ```
 
-`VITE_API_BASE_URL` is optional for local development because Vite proxies `/webhook` and `/health` to `http://localhost:3000`. In production, set it only if the mock backend is deployed on a separate origin. Do not commit API keys, Vapi private keys, tokens, passwords, or secrets.
+Render provides `PORT` automatically, so do not set it manually unless needed for a custom environment. Do not commit API keys, Vapi private keys, tokens, passwords, or secrets.
 
 GitHub push commands:
 
@@ -345,7 +359,7 @@ GitHub push commands:
 git init
 git remote add origin https://github.com/PavanKumarMadana/kapture-collections-voicebot.git
 git add .
-git commit -m "Prepare Kapture Collections AI for Vercel deployment"
+git commit -m "Prepare Kapture Collections AI for Render deployment"
 git branch -M main
 git push -u origin main
 ```
@@ -355,7 +369,7 @@ If the remote already exists:
 ```bash
 git remote set-url origin https://github.com/PavanKumarMadana/kapture-collections-voicebot.git
 git add .
-git commit -m "Prepare Kapture Collections AI for Vercel deployment"
+git commit -m "Prepare Kapture Collections AI for Render deployment"
 git push
 ```
 
