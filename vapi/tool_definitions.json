@@ -1,0 +1,140 @@
+[
+  {
+    "type": "function",
+    "function": {
+      "name": "get_account_details",
+      "description": "Retrieve backend account details for the configured account. Sensitive debt details must not be disclosed until verify_customer returns verified=true.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "account_id": {
+            "type": "string",
+            "description": "Customer account identifier, for example ACC-88392."
+          }
+        },
+        "required": ["account_id"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "verify_customer",
+      "description": "Verify the speaker using the account ID and customer-provided last four PAN digits or birth year. This is the only tool that can authenticate the customer.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "account_id": {
+            "type": "string"
+          },
+          "verification_code": {
+            "type": "string",
+            "description": "Last four PAN digits or birth year. Mock valid values are 1234 and 1995."
+          }
+        },
+        "required": ["account_id", "verification_code"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "log_promise_to_pay",
+      "description": "Record a promise-to-pay after the customer is authenticated and agrees to a date and amount.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "account_id": {
+            "type": "string"
+          },
+          "ptp_date": {
+            "type": "string",
+            "description": "Promise-to-pay date in ISO YYYY-MM-DD where possible."
+          },
+          "amount": {
+            "type": "number",
+            "description": "Promised amount in INR."
+          }
+        },
+        "required": ["account_id", "ptp_date", "amount"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "send_payment_link",
+      "description": "Send a mock payment link after authentication. This does not process payment.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "account_id": {
+            "type": "string"
+          },
+          "channel": {
+            "type": "string",
+            "enum": ["SMS", "WhatsApp", "BOTH"]
+          }
+        },
+        "required": ["account_id", "channel"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "escalate_to_agent",
+      "description": "Create a mock escalation for dispute, hardship, complex request, or customer-requested human support.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "account_id": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string",
+            "enum": ["DISPUTE", "HARDSHIP", "COMPLEX_REQUEST", "CUSTOMER_REQUEST"]
+          },
+          "notes": {
+            "type": "string"
+          }
+        },
+        "required": ["account_id", "reason", "notes"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "mark_disposition",
+      "description": "Log the final call disposition. Every call path must end with a disposition.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "account_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PTP_AGREED",
+              "ALREADY_PAID",
+              "DISPUTED",
+              "HARDSHIP_ESCALATED",
+              "WRONG_PERSON",
+              "DO_NOT_CALL",
+              "CALLBACK_REQUESTED",
+              "NO_RESPONSE",
+              "HOSTILE",
+              "COMPLETED"
+            ]
+          },
+          "notes": {
+            "type": "string"
+          }
+        },
+        "required": ["account_id", "status", "notes"]
+      }
+    }
+  }
+]

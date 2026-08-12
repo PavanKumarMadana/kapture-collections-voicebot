@@ -1,0 +1,25 @@
+{
+  "name": "kapture-collections-voicebot",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Submission-ready Kapture Finance outbound collections voicebot assignment.",
+  "workspaces": [
+    "dashboard"
+  ],
+  "scripts": {
+    "dev": "npm --prefix dashboard run dev --",
+    "build": "npm --prefix dashboard run build",
+    "preview": "npm --prefix dashboard run preview --",
+    "test": "node tests/run_tests.js",
+    "start": "node mock-server/server.js",
+    "dashboard": "npm --prefix dashboard run dev --",
+    "dashboard:build": "npm --prefix dashboard run build"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  },
+  "devDependencies": {}
+}

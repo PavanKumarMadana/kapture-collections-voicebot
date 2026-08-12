@@ -1,0 +1,17 @@
+{
+  "name": "kapture-collections-mock-server",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Mock webhook server for Vapi tool calls.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node ../tests/run_tests.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}

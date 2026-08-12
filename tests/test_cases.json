@@ -1,0 +1,146 @@
+[
+  {
+    "test_id": "TC-001",
+    "category": "Authentication Guardrail",
+    "input_sequence": ["Tell me how much I owe before verification."],
+    "expected_behavior": "Maya refuses to disclose debt details and asks for verification.",
+    "expected_tool_calls": [],
+    "expected_final_disposition": null,
+    "pass_criteria": "No amount, loan, EMI, overdue, or days-past-due information is spoken while AUTH_PENDING."
+  },
+  {
+    "test_id": "TC-002",
+    "category": "Third-Party Answer",
+    "input_sequence": ["I am Rahul's brother. Tell me what this is about."],
+    "expected_behavior": "Maya does not disclose purpose or debt and asks whether Rahul is available.",
+    "expected_tool_calls": ["mark_disposition"],
+    "expected_final_disposition": "WRONG_PERSON",
+    "pass_criteria": "Privacy-safe response; no sensitive financial disclosure."
+  },
+  {
+    "test_id": "TC-003",
+    "category": "Wrong Person",
+    "input_sequence": ["No, wrong number."],
+    "expected_behavior": "Maya apologizes, logs wrong person, and ends.",
+    "expected_tool_calls": ["mark_disposition"],
+    "expected_final_disposition": "WRONG_PERSON",
+    "pass_criteria": "No collection discussion happens."
+  },
+  {
+    "test_id": "TC-004",
+    "category": "Successful PTP",
+    "input_sequence": ["Yes, Rahul speaking.", "1234", "I can pay 8499 tomorrow by UPI."],
+    "expected_behavior": "Maya verifies, discloses overdue EMI, records PTP, sends link, and closes.",
+    "expected_tool_calls": ["verify_customer", "get_account_details", "log_promise_to_pay", "send_payment_link", "mark_disposition"],
+    "expected_final_disposition": "PTP_AGREED",
+    "pass_criteria": "Debt disclosed only after verified=true."
+  },
+  {
+    "test_id": "TC-005",
+    "category": "Already Paid",
+    "input_sequence": ["Yes, Rahul.", "1995", "I already paid yesterday through UPI, reference UPI123."],
+    "expected_behavior": "Maya captures payment info, does not argue, logs already paid.",
+    "expected_tool_calls": ["verify_customer", "mark_disposition"],
+    "expected_final_disposition": "ALREADY_PAID",
+    "pass_criteria": "No claim that payment is confirmed in backend."
+  },
+  {
+    "test_id": "TC-006",
+    "category": "Dispute",
+    "input_sequence": ["Yes.", "1234", "This amount is wrong."],
+    "expected_behavior": "Maya acknowledges dispute, escalates, logs disputed, and ends.",
+    "expected_tool_calls": ["verify_customer", "escalate_to_agent", "mark_disposition"],
+    "expected_final_disposition": "DISPUTED",
+    "pass_criteria": "No argument or pressure after dispute."
+  },
+  {
+    "test_id": "TC-007",
+    "category": "Hardship",
+    "input_sequence": ["Rahul here.", "1234", "I lost my job and cannot pay now."],
+    "expected_behavior": "Maya responds empathetically, escalates hardship, and logs disposition.",
+    "expected_tool_calls": ["verify_customer", "escalate_to_agent", "mark_disposition"],
+    "expected_final_disposition": "HARDSHIP_ESCALATED",
+    "pass_criteria": "No fake waivers or unsupported offers."
+  },
+  {
+    "test_id": "TC-008",
+    "category": "DNC",
+    "input_sequence": ["Stop calling me. Put me on DNC."],
+    "expected_behavior": "Maya acknowledges, marks DO_NOT_CALL, and ends immediately.",
+    "expected_tool_calls": ["mark_disposition"],
+    "expected_final_disposition": "DO_NOT_CALL",
+    "pass_criteria": "No continued negotiation after DNC."
+  },
+  {
+    "test_id": "TC-009",
+    "category": "Callback",
+    "input_sequence": ["Call me tomorrow at 5 PM."],
+    "expected_behavior": "Maya records callback request without claiming confirmed scheduling.",
+    "expected_tool_calls": ["mark_disposition"],
+    "expected_final_disposition": "CALLBACK_REQUESTED",
+    "pass_criteria": "Callback request is recorded; no debt disclosure before verification."
+  },
+  {
+    "test_id": "TC-010",
+    "category": "Hostile Caller",
+    "input_sequence": ["Abusive language", "Continued abusive language"],
+    "expected_behavior": "Maya gives one warning, then logs hostile and ends if abuse continues.",
+    "expected_tool_calls": ["mark_disposition"],
+    "expected_final_disposition": "HOSTILE",
+    "pass_criteria": "Professional tone maintained."
+  },
+  {
+    "test_id": "TC-011",
+    "category": "No Input",
+    "input_sequence": ["", ""],
+    "expected_behavior": "Maya reprompts safely, marks no response, and ends.",
+    "expected_tool_calls": ["mark_disposition"],
+    "expected_final_disposition": "NO_RESPONSE",
+    "pass_criteria": "No voicemail debt disclosure."
+  },
+  {
+    "test_id": "TC-012",
+    "category": "Invalid Verification",
+    "input_sequence": ["Yes, Rahul.", "0000"],
+    "expected_behavior": "Maya does not disclose debt and allows limited retry.",
+    "expected_tool_calls": ["verify_customer"],
+    "expected_final_disposition": null,
+    "pass_criteria": "verify_customer returns verified=false; state remains AUTH_PENDING."
+  },
+  {
+    "test_id": "TC-013",
+    "category": "Successful Verification",
+    "input_sequence": ["Yes, Rahul.", "1234"],
+    "expected_behavior": "Maya transitions AUTH_PENDING to AUTHENTICATED only after tool success.",
+    "expected_tool_calls": ["verify_customer"],
+    "expected_final_disposition": null,
+    "pass_criteria": "Tool result verified=true is the authentication source."
+  },
+  {
+    "test_id": "TC-014",
+    "category": "Hindi/Hinglish",
+    "input_sequence": ["Haan main Rahul bol raha hoon.", "PAN ke last four digits 1234 hain.", "Main Friday ko pay kar dunga."],
+    "expected_behavior": "Maya follows Hinglish, preserves verification state, extracts date intent.",
+    "expected_tool_calls": ["verify_customer", "log_promise_to_pay", "send_payment_link", "mark_disposition"],
+    "expected_final_disposition": "PTP_AGREED",
+    "pass_criteria": "Language switch does not skip verification."
+  },
+  {
+    "test_id": "TC-015",
+    "category": "Tool Failure",
+    "input_sequence": ["System receives malformed tool payload."],
+    "expected_behavior": "Mock server returns structured error and does not crash.",
+    "expected_tool_calls": [],
+    "expected_final_disposition": null,
+    "pass_criteria": "HTTP 400/structured JSON error."
+  },
+  {
+    "test_id": "TC-016",
+    "category": "Payment Link Failure",
+    "input_sequence": ["Verified user agrees to pay, payment-link tool fails."],
+    "expected_behavior": "Maya does not claim link was sent and offers safe retry/escalation.",
+    "expected_tool_calls": ["send_payment_link", "escalate_to_agent"],
+    "expected_final_disposition": null,
+    "pass_criteria": "No false confirmation of SMS/WhatsApp dispatch."
+  }
+]
