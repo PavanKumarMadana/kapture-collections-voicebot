@@ -274,6 +274,13 @@ Available Demo Mode scenarios:
 - Run DNC Scenario
 - Already Paid
 - Dispute
+- Wrong Person
+- Hardship
+- Callback
+- Hostile
+- No Input
+- Invalid Verification
+- Hindi/Hinglish
 - Reset
 
 The dashboard calls the existing mock server through `/webhook` for real mock tool execution:

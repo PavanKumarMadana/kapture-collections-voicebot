@@ -8,6 +8,14 @@ The implementation uses Vapi for telephony orchestration, STT, LLM reasoning, TT
 
 Expected outcome: a submission-ready repository that can be run locally, tested, connected to Vapi through ngrok, and explained clearly by an evaluator.
 
+## Business Problem
+
+Kapture Finance operates a loan book with personal loan EMIs. When a customer becomes overdue, the finance team needs to contact the customer to recover payment. Manual outbound calling scales poorly, is expensive, and is subject to compliance/privacy constraints. The goal is to automate the first-line outbound collections conversation with a voice AI agent that can safely verify identity, discuss the overdue amount, capture a promise-to-pay, handle common exceptions, and escalate sensitive cases to humans.
+
+But collections calling has strict privacy rules: debt details must not be disclosed to a third party or to an unverified speaker. A naive voicebot that answers "How much do I owe?" before authentication leaks sensitive financial data and is non-compliant.
+
+This project solves both problems: it automates first-line collection resolution while strictly enforcing verification-before-disclosure.
+
 ## Goals and Non-Goals
 
 Goals:
@@ -249,6 +257,37 @@ Allowed:
 - No threats, shaming, insults, legal claims, police references, fake credit-score consequences, invented fees, or unauthorized discounts.
 - The agent only uses tool-returned account information.
 - No voicemail debt disclosure.
+
+## Escalation and Disposition
+
+### Escalation Paths
+
+- **Dispute**: reason `DISPUTE`, tool `escalate_to_agent`, then `mark_disposition(DISPUTED)`.
+- **Hardship**: reason `HARDSHIP`, tool `escalate_to_agent`, then `mark_disposition(HARDSHIP_ESCALATED)`.
+- **Complex request / customer-requested human**: reason `COMPLEX_REQUEST` or `CUSTOMER_REQUEST`, tool `escalate_to_agent`.
+- **Wrong person**: `mark_disposition(WRONG_PERSON)`.
+- **DNC**: `mark_disposition(DO_NOT_CALL)`.
+- **Already paid**: `mark_disposition(ALREADY_PAID)`.
+- **Callback requested**: `mark_disposition(CALLBACK_REQUESTED)`.
+- **No input / voicemail**: `mark_disposition(NO_RESPONSE)`.
+- **Hostile caller**: `mark_disposition(HOSTILE)`.
+
+### Disposition Values
+
+| Disposition | Meaning |
+| --- | --- |
+| PTP_AGREED | Customer agreed to pay on a date. |
+| ALREADY_PAID | Customer claims payment made. |
+| DISPUTED | Customer disputes the amount/loan. |
+| HARDSHIP_ESCALATED | Hardship claimed; escalated. |
+| WRONG_PERSON | Third party / wrong number. |
+| DO_NOT_CALL | Customer wants no further calls. |
+| CALLBACK_REQUESTED | Customer asked to be called back. |
+| NO_RESPONSE | No meaningful response / voicemail. |
+| HOSTILE | Abusive caller after warning. |
+| COMPLETED | Generic completed call. |
+
+Every terminal path must call `mark_disposition` exactly once when the final outcome is known.
 
 ## Tool Failure Behavior
 

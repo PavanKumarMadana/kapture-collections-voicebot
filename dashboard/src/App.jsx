@@ -178,6 +178,126 @@ function getScenarios(ptpDate) {
       state("ESCALATED"),
       status("Completed"),
       state("CALL_ENDED")
+    ],
+    wrongPerson: [
+      status("Connected"),
+      state("INIT"),
+      message("MAYA", "Hello, this is Maya calling from Kapture Finance. Am I speaking with Mr. Rahul Sharma?"),
+      message("CUSTOMER", "I am Rahul's brother. Tell me what this is about."),
+      message("MAYA", "For privacy and security reasons, I can only discuss this matter directly with Rahul. Please ask him to contact us or let me know if he is available."),
+      localTool("privacy_guard", "speaker=third_party", "NO_DEBT_DISCLOSURE"),
+      tool("mark_disposition", "status=WRONG_PERSON", () => markDisposition("WRONG_PERSON", "Third party answered; Rahul unavailable."), (r) => r.disposition),
+      disposition("WRONG_PERSON", "Third party answered; Rahul unavailable."),
+      state("WRONG_PERSON"),
+      status("Completed"),
+      state("CALL_ENDED")
+    ],
+    hardship: [
+      status("Connected"),
+      state("INIT"),
+      message("MAYA", "Hello, this is Maya calling from Kapture Finance. Am I speaking with Mr. Rahul Sharma?"),
+      message("CUSTOMER", "Yes, Rahul here."),
+      complete("INIT"),
+      state("AUTH_PENDING"),
+      message("MAYA", "For security purposes, could you please confirm the last four digits of your PAN or your year of birth?"),
+      message("CUSTOMER", "1234."),
+      tool("verify_customer", "account_id=ACC-88392, verification_code=1234", () => verifyCustomer("1234"), (r) => `verified=${r.verified}`),
+      complete("AUTH_PENDING"),
+      state("AUTHENTICATED"),
+      message("CUSTOMER", "I cannot pay right now. I lost my job."),
+      message("MAYA", "I am sorry to hear that. I will route this to a specialist for review. I cannot promise any waiver or discount on this call."),
+      state("ACTION_EXECUTION"),
+      tool("escalate_to_agent", "reason=HARDSHIP", () => escalateToAgent("HARDSHIP", "Customer reports job loss and inability to pay."), (r) => `escalation_id=${r.escalation_id}`),
+      tool("mark_disposition", "status=HARDSHIP_ESCALATED", () => markDisposition("HARDSHIP_ESCALATED", "Hardship claim escalated for review."), (r) => r.disposition),
+      disposition("HARDSHIP_ESCALATED", "Hardship claim escalated for review.", { escalationId: "See tool result" }),
+      complete("AUTHENTICATED", "ACTION_EXECUTION"),
+      state("ESCALATED"),
+      status("Completed"),
+      state("CALL_ENDED")
+    ],
+    callback: [
+      status("Connected"),
+      state("INIT"),
+      message("MAYA", "Hello, this is Maya calling from Kapture Finance. Am I speaking with Mr. Rahul Sharma?"),
+      message("CUSTOMER", "Call me tomorrow evening."),
+      message("MAYA", "I have recorded your callback request. I cannot confirm a scheduled callback because no scheduling system is connected in this demo."),
+      localTool("callback_time_captured", "utterance=tomorrow evening", "Callback_Time=tomorrow evening"),
+      tool("mark_disposition", "status=CALLBACK_REQUESTED", () => markDisposition("CALLBACK_REQUESTED", "Customer requested callback tomorrow evening."), (r) => r.disposition),
+      disposition("CALLBACK_REQUESTED", "Customer requested callback tomorrow evening."),
+      state("CALLBACK_REQUESTED"),
+      status("Completed"),
+      state("CALL_ENDED")
+    ],
+    hostile: [
+      status("Connected"),
+      state("INIT"),
+      message("MAYA", "Hello, this is Maya calling from Kapture Finance. Am I speaking with Mr. Rahul Sharma?"),
+      message("CUSTOMER", "Stop bothering me!"),
+      message("MAYA", "I understand you are upset. I can continue only if we keep the conversation respectful."),
+      message("CUSTOMER", "Continues abusive language."),
+      tool("mark_disposition", "status=HOSTILE", () => markDisposition("HOSTILE", "Caller remained hostile after warning."), (r) => r.disposition),
+      disposition("HOSTILE", "Caller remained hostile after warning."),
+      state("HOSTILE"),
+      status("Completed"),
+      state("CALL_ENDED")
+    ],
+    noInput: [
+      status("Connected"),
+      state("INIT"),
+      message("MAYA", "Hello, this is Maya calling from Kapture Finance. Am I speaking with Mr. Rahul Sharma?"),
+      message("CUSTOMER", "[No response]"),
+      message("MAYA", "Hello, are you able to hear me?"),
+      message("CUSTOMER", "[No response]"),
+      message("MAYA", "I am unable to hear a response, so I will end this call now."),
+      localTool("voicemail_guard", "speaker=unknown", "NO_DEBT_DISCLOSURE"),
+      tool("mark_disposition", "status=NO_RESPONSE", () => markDisposition("NO_RESPONSE", "No meaningful response after retries."), (r) => r.disposition),
+      disposition("NO_RESPONSE", "No meaningful response after retries."),
+      state("NO_INPUT"),
+      status("Completed"),
+      state("CALL_ENDED")
+    ],
+    invalidVerification: [
+      status("Connected"),
+      state("INIT"),
+      message("MAYA", "Hello, this is Maya calling from Kapture Finance. Am I speaking with Mr. Rahul Sharma?"),
+      message("CUSTOMER", "Yes, this is Rahul."),
+      complete("INIT"),
+      state("AUTH_PENDING"),
+      message("MAYA", "For security purposes, could you please confirm the last four digits of your PAN or your year of birth?"),
+      message("CUSTOMER", "9999."),
+      tool("verify_customer", "account_id=ACC-88392, verification_code=9999", () => verifyCustomer("9999"), (r) => `verified=${r.verified}`),
+      localTool("debt_disclosure_lock", "verified=false", "LOCKED"),
+      message("MAYA", "I could not verify that information. For privacy reasons, I cannot discuss account details unless verification succeeds."),
+      state("AUTH_PENDING"),
+      status("Connected")
+    ],
+    bilingual: [
+      status("Connected"),
+      state("INIT"),
+      message("MAYA", "Hello, this is Maya calling from Kapture Finance. Am I speaking with Mr. Rahul Sharma?"),
+      message("CUSTOMER", "Haan main Rahul bol raha hoon."),
+      complete("INIT"),
+      state("AUTH_PENDING"),
+      message("MAYA", "Security ke liye, please PAN ke last four digits ya birth year confirm kariye."),
+      message("CUSTOMER", "PAN ke last four digits 1234 hain."),
+      tool("verify_customer", "account_id=ACC-88392, verification_code=1234", () => verifyCustomer("1234"), (r) => `verified=${r.verified}`),
+      complete("AUTH_PENDING"),
+      state("AUTHENTICATED"),
+      tool("get_account_details", "account_id=ACC-88392", getAccountDetails, (r) => `Rs. ${r.overdue_amount.toLocaleString("en-IN")}, DPD=${r.days_past_due}`),
+      message("MAYA", "Thank you. Aapki identity verify ho gayi hai. Aapka EMI Rs. 8,499, 12 din se overdue hai."),
+      complete("AUTHENTICATED"),
+      state("NEGOTIATION"),
+      message("CUSTOMER", "Main Friday ko pay kar dunga."),
+      message("MAYA", "Theek hai, main promise-to-pay record kar rahi hoon."),
+      state("ACTION_EXECUTION"),
+      tool("log_promise_to_pay", `account_id=ACC-88392, ptp_date=${ptpDate}, amount=8499`, () => logPromiseToPay(ptpDate, 8499), (r) => `ptp_id=${r.ptp_id}`),
+      tool("send_payment_link", "account_id=ACC-88392, channel=SMS", () => sendPaymentLink("SMS"), (r) => `message_id=${r.message_id}`),
+      tool("mark_disposition", "status=PTP_AGREED", () => markDisposition("PTP_AGREED", "Hinglish customer agreed to pay."), (r) => r.disposition),
+      disposition("PTP_AGREED", "Hinglish customer agreed to pay.", { ptpDate, ptpAmount: 8499 }),
+      complete("NEGOTIATION", "ACTION_EXECUTION"),
+      state("PTP_COLLECTED"),
+      status("Completed"),
+      state("CALL_ENDED")
     ]
   };
 }
@@ -338,6 +458,13 @@ export default function App() {
             <button onClick={() => runAll("dnc", "Do Not Call")}>Run DNC Scenario</button>
             <button onClick={() => runAll("alreadyPaid", "Already Paid")}>Already Paid</button>
             <button onClick={() => runAll("dispute", "Dispute")}>Dispute</button>
+            <button onClick={() => runAll("wrongPerson", "Wrong Person")}>Wrong Person</button>
+            <button onClick={() => runAll("hardship", "Hardship")}>Hardship</button>
+            <button onClick={() => runAll("callback", "Callback")}>Callback</button>
+            <button onClick={() => runAll("hostile", "Hostile")}>Hostile</button>
+            <button onClick={() => runAll("noInput", "No Input")}>No Input</button>
+            <button onClick={() => runAll("invalidVerification", "Invalid Verification")}>Invalid Verification</button>
+            <button onClick={() => runAll("bilingual", "Hindi/Hinglish")}>Hindi/Hinglish</button>
             <button className="secondary" onClick={reset}>Reset</button>
           </div>
           {dashboard.error && <p className="error-text">Tool failure: {dashboard.error}</p>}

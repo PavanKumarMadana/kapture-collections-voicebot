@@ -6,12 +6,19 @@ const states = [
   "ACTION_EXECUTION",
   "PTP_COLLECTED",
   "ESCALATED",
+  "WRONG_PERSON",
+  "DO_NOT_CALL",
+  "NO_INPUT",
   "CALLBACK_REQUESTED",
+  "ALREADY_PAID",
+  "DISPUTED",
+  "HARDSHIP_ESCALATED",
+  "HOSTILE",
   "CALL_ENDED"
 ];
 
 const mainOrder = ["INIT", "AUTH_PENDING", "AUTHENTICATED", "NEGOTIATION", "ACTION_EXECUTION", "PTP_COLLECTED", "CALL_ENDED"];
-const terminalStates = new Set(["PTP_COLLECTED", "ESCALATED", "CALLBACK_REQUESTED", "CALL_ENDED"]);
+const terminalStates = new Set(["PTP_COLLECTED", "ESCALATED", "WRONG_PERSON", "DO_NOT_CALL", "NO_INPUT", "CALLBACK_REQUESTED", "ALREADY_PAID", "DISPUTED", "HARDSHIP_ESCALATED", "HOSTILE", "CALL_ENDED"]);
 
 export default function StateMachine({ currentState, completedStates, verified }) {
   return (
